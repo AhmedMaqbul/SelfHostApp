@@ -147,9 +147,46 @@ public class SelfHostAppModule : AbpModule
                 options.AddDevelopmentEncryptionAndSigningCertificate = false;
             });
 
+            //PreConfigure<OpenIddictServerBuilder>(serverBuilder =>
+            //{
+            //    serverBuilder.AddProductionEncryptionAndSigningCertificate("openiddict.pfx", configuration["AuthServer:CertificatePassPhrase"]!);
+            //});
+
             PreConfigure<OpenIddictServerBuilder>(serverBuilder =>
             {
-                serverBuilder.AddProductionEncryptionAndSigningCertificate("openiddict.pfx", configuration["AuthServer:CertificatePassPhrase"]!);
+                var configuration = context.Services.GetConfiguration();
+                var assembly = typeof(Program).Assembly;
+
+                // 🔍 dynamically find embedded pfx
+                var resourceName = assembly
+                    .GetManifestResourceNames()
+                    .FirstOrDefault(x => x.EndsWith("openiddict.pfx", StringComparison.OrdinalIgnoreCase));
+
+                if (resourceName == null)
+                {
+                    throw new Exception("❌ openiddict.pfx not found as embedded resource");
+                }
+
+                var tempPath = Path.Combine(
+                    Path.GetTempPath(),
+                    $"openiddict-{Guid.NewGuid()}.pfx"
+                );
+
+                using (var stream = assembly.GetManifestResourceStream(resourceName))
+                {
+                    if (stream == null)
+                    {
+                        throw new Exception($"❌ Failed to load resource: {resourceName}");
+                    }
+
+                    using var fileStream = new FileStream(tempPath, FileMode.Create, FileAccess.Write);
+                    stream.CopyTo(fileStream);
+                }
+
+                serverBuilder.AddProductionEncryptionAndSigningCertificate(
+                    tempPath,
+                    configuration["AuthServer:CertificatePassPhrase"]!
+                );
             });
         }
 
