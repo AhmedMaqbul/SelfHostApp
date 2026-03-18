@@ -1,9 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Volo.Abp.EntityFrameworkCore;
-using Volo.Abp.EntityFrameworkCore.Modeling;
+using SelfHostApp.Entities;
 using Volo.Abp.AuditLogging.EntityFrameworkCore;
 using Volo.Abp.BackgroundJobs.EntityFrameworkCore;
 using Volo.Abp.BlobStoring.Database.EntityFrameworkCore;
+using Volo.Abp.EntityFrameworkCore;
+using Volo.Abp.EntityFrameworkCore.Modeling;
 using Volo.Abp.FeatureManagement.EntityFrameworkCore;
 using Volo.Abp.Identity.EntityFrameworkCore;
 using Volo.Abp.OpenIddict.EntityFrameworkCore;
@@ -15,9 +16,11 @@ namespace SelfHostApp.Data;
 
 public class SelfHostAppDbContext : AbpDbContext<SelfHostAppDbContext>
 {
-    
+
     public const string DbTablePrefix = "App";
     public const string DbSchema = null;
+
+    public DbSet<TodoItem> TodoItems { get; set; }
 
     public SelfHostAppDbContext(DbContextOptions<SelfHostAppDbContext> options)
         : base(options)
@@ -39,8 +42,14 @@ public class SelfHostAppDbContext : AbpDbContext<SelfHostAppDbContext>
         builder.ConfigureIdentity();
         builder.ConfigureOpenIddict();
         builder.ConfigureTenantManagement();
-        
+
         /* Configure your own entities here */
+        builder.Entity<TodoItem>(b =>
+        {
+            b.ToTable(DbTablePrefix + "TodoItems", DbSchema);
+            b.ConfigureByConvention();
+        });
+
     }
 }
 
