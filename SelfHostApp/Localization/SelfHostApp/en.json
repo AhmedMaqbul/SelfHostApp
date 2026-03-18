@@ -4,6 +4,13 @@
     "AppName": "SelfHostApp",
     "Welcome_Title": "Welcome",
     "Welcome_Text": "This is a minimalist, single layer application startup template for the ABP Framework.",
-    "Menu:Home": "Home"
+    "Menu:Home": "Home",
+    "Menu:Todo": "Todo",
+    "Permission:Todo": "Todo",
+    "Permission:TodoItems": "Todo Items",
+    "Permission:TodoItemsCreate": "Todo Items Create",
+    "Permission:TodoItemsDelete": "Todo Items Delete",
+    "TODOLIST": "TODO LIST",
+    "DELETEDTODOITEM": "Deleted the todo item."
   }
 }
