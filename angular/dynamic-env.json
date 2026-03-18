@@ -1,0 +1,21 @@
+{
+  "production": true,
+  "application": {
+    "baseUrl":"https://selfhostapp-web",
+    "name": "SelfHostApp",
+    "logoUrl": ""
+  },
+  "oAuthConfig": {
+    "issuer": "https://selfhostapp-api/",
+    "redirectUri": "https://selfhostapp",
+    "clientId": "SelfHostApp_App",
+    "responseType": "code",
+    "scope": "offline_access openid profile email phone"
+  },
+  "apis": {
+    "default": {
+      "url": "https://selfhostapp-api",
+      "rootNamespace": "SelfHostApp"
+    }
+  }
+}
