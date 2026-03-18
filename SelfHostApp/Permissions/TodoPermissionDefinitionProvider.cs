@@ -1,4 +1,6 @@
-﻿using Volo.Abp.Authorization.Permissions;
+﻿using SelfHostApp.Localization;
+using Volo.Abp.Authorization.Permissions;
+using Volo.Abp.Localization;
 
 namespace SelfHostApp.Permissions;
 
@@ -30,6 +32,6 @@ public class TodoPermissionDefinitionProvider
 
     private static LocalizableString L(string name)
     {
-        return LocalizableString.Create<SelfHostResource>(name);
+        return LocalizableString.Create<SelfHostAppResource>(name);
     }
 }
