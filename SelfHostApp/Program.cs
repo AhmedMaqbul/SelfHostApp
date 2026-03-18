@@ -1,4 +1,5 @@
 using System;
+using Microsoft.Extensions.Hosting.WindowsServices;
 using SelfHostApp.Data;
 using Serilog;
 using Serilog.Events;
@@ -10,50 +11,105 @@ public class Program
 {
     public async static Task<int> Main(string[] args)
     {
-        Log.Logger = new LoggerConfiguration()
-            .WriteTo.Async(c => c.File("Logs/logs.txt"))
-            .WriteTo.Async(c => c.Console())
-            .CreateBootstrapLogger();
+        var logDirectory = Path.Combine(AppContext.BaseDirectory, "Logs");
+        Directory.CreateDirectory(logDirectory);
+
+        var logPath = Path.Combine(logDirectory, "logs-.txt");
+
+        var loggerConfiguration = new LoggerConfiguration()
+#if DEBUG
+            .MinimumLevel.Debug()
+#else
+            .MinimumLevel.Information()
+#endif
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+            .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
+            .Enrich.FromLogContext()
+            .WriteTo.Async(c => c.File(
+                logPath,
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 30,
+                shared: true
+            ));
+
+        if (!WindowsServiceHelpers.IsWindowsService())
+        {
+            loggerConfiguration.WriteTo.Console();
+        }
+
+        if (OperatingSystem.IsWindows() && WindowsServiceHelpers.IsWindowsService())
+        {
+            loggerConfiguration.WriteTo.EventLog(
+                source: "SelfHostApp",
+                manageEventSource: true,
+                restrictedToMinimumLevel: LogEventLevel.Information
+            );
+        }
+
+        if (IsMigrateDatabase(args))
+        {
+            loggerConfiguration.MinimumLevel.Override("Volo.Abp", LogEventLevel.Warning);
+            loggerConfiguration.MinimumLevel.Override("Microsoft", LogEventLevel.Warning);
+        }
+
+        Log.Logger = loggerConfiguration.CreateLogger();
 
         try
         {
             var builder = WebApplication.CreateBuilder(args);
-            builder.Host.AddAppSettingsSecretsJson()
+            builder.WebHost.UseKestrel();
+
+            builder.Host.UseWindowsService()
+                .AddAppSettingsSecretsJson()
                 .UseAutofac()
-                .UseSerilog((context, services, loggerConfiguration) =>
-                {
-                    if (IsMigrateDatabase(args))
-                    {
-                        loggerConfiguration
-                            .MinimumLevel.Override("Volo.Abp", LogEventLevel.Warning)
-                            .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
-                            .WriteTo.Async(c => c.Console(standardErrorFromLevel: LogEventLevel.Error));
-                    }
-                    else
-                    {
-                        loggerConfiguration
-                            .ReadFrom.Configuration(context.Configuration)
-                            .ReadFrom.Services(services)
-                            .WriteTo.Async(c => c.AbpStudio(services));
-                    }
-                });
+                .UseSerilog();
+
             if (IsMigrateDatabase(args))
             {
                 builder.Services.AddDataMigrationEnvironment();
             }
             await builder.AddApplicationAsync<SelfHostAppModule>();
             var app = builder.Build();
-            await app.InitializeApplicationAsync();
 
             if (IsMigrateDatabase(args))
             {
-                await app.Services.GetRequiredService<SelfHostAppDbMigrationService>().MigrateAsync();
+                using var scope = app.Services.CreateScope();
+                var migrationService = scope.ServiceProvider.GetRequiredService<SelfHostAppDbMigrationService>();
+
+                await migrationService.MigrateAsync();
+
                 var previous = Console.ForegroundColor;
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Migration completed.");
                 Console.ForegroundColor = previous;
+
                 return 0;
             }
+
+            await app.InitializeApplicationAsync();
+
+            //if (IsMigrateDatabase(args))
+            //{
+            //    await app.Services.GetRequiredService<SelfHostAppDbMigrationService>().MigrateAsync();
+            //    var previous = Console.ForegroundColor;
+            //    Console.ForegroundColor = ConsoleColor.Green;
+            //    Console.WriteLine("Migration completed.");
+            //    Console.ForegroundColor = previous;
+            //    return 0;
+            //}
+
+            app.UseStaticFiles();
+
+            app.UseRouting();
+
+            app.MapControllers();
+
+            app.MapGet("/", () => Results.Redirect("/app"));
+
+            app.MapFallbackToFile(
+                "/app/{*path}",
+                "app/index.html"
+            );
 
             Log.Information("Starting SelfHostApp.");
             await app.RunAsync();
