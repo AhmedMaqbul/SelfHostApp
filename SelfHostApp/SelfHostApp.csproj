@@ -1,11 +1,39 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
+		
+		<!-- Angular SPA -->
+		<SpaRoot>..\angular\</SpaRoot>
+		<SpaDist>$(SpaRoot)dist\SelfHostApp\browser\</SpaDist>
   </PropertyGroup>
+
+	<!-- Build Angular during publish -->
+	<Target Name="BuildAngular"
+          Condition="'$(Configuration)' == 'Release'"
+          BeforeTargets="Publish">
+
+		<Message Text="Building Angular SPA (production)..." Importance="high" />
+
+		<Exec WorkingDirectory="$(SpaRoot)" Command="yarn install --frozen-lockfile" />
+		<Exec WorkingDirectory="$(SpaRoot)" Command="yarn build:prod" />
+
+		<!-- Angular dist files -->
+		<ItemGroup>
+			<SpaDistFiles Include="$(SpaDist)**\*" />
+		</ItemGroup>
+
+		<RemoveDir Directories="wwwroot\app" Condition="Exists('wwwroot\app')" />
+		<MakeDir Directories="wwwroot\app" />
+
+		<Copy
+      SourceFiles="@(SpaDistFiles)"
+      DestinationFolder="wwwroot\app\%(RecursiveDir)"
+      SkipUnchangedFiles="true" />
+	</Target>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="10.0.5" />
