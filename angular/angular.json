@@ -28,6 +28,8 @@
             "polyfills": [
               "src/polyfills.ts"
             ],
+            "baseHref": "/app/",
+            "deployUrl": "/app/",
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "allowedCommonJsDependencies": ["chart.js", "js-sha256"],
@@ -169,6 +171,10 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "port": 44321,
+            "ssl": true
+          },
           "configurations": {
             "production": {
               "buildTarget": "SelfHostApp:build:production"
