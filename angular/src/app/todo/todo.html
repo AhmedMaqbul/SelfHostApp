@@ -1,0 +1,42 @@
+<div class="container" *abpPermission="'Todo.Items'">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">{{ '::TODOLIST' | abpLocalization }}</div>
+    </div>
+
+    <div class="card-body">
+      <form class="row row-cols-lg-auto g-3 align-items-center" (ngSubmit)="create()">
+        <div class="col-12">
+          <div class="input-group">
+            <input
+              name="NewTodoText"
+              type="text"
+              [(ngModel)]="newTodoText"
+              class="form-control"
+              placeholder="enter text..."
+            />
+          </div>
+        </div>
+
+        <div class="col-12">
+          <button type="submit" class="btn btn-primary" *abpPermission="'Todo.Items.Create'">
+            {{ 'AbpUi::Save' | abpLocalization }}
+          </button>
+        </div>
+      </form>
+
+      <ul id="TodoList">
+        @for (todoItem of todoItems; track todoItem.id) {
+        <li>
+          <i
+            class="fa fa-trash-o"
+            *abpPermission="'Todo.Items.Delete'"
+            (click)="delete(todoItem.id)"
+          ></i>
+          {{ todoItem.text }}
+        </li>
+        }
+      </ul>
+    </div>
+  </div>
+</div>
