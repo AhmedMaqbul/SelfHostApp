@@ -1,10 +1,10 @@
 import { Environment } from '@abp/ng.core';
 
-const baseUrl = 'http://localhost:4200';
+const baseUrl = 'https://localhost:44321';
 
 const oAuthConfig = {
-  issuer: 'https://localhost:44321/',
-  redirectUri: baseUrl,
+  issuer: baseUrl + '/',
+  redirectUri: baseUrl + '/app',
   clientId: 'SelfHostApp_App',
   responseType: 'code',
   scope: 'offline_access SelfHostApp',
@@ -20,7 +20,7 @@ export const environment = {
   oAuthConfig,
   apis: {
     default: {
-      url: 'https://localhost:44321',
+      url: baseUrl,
       rootNamespace: 'SelfHostApp',
     },
     AbpAccountPublic: {
