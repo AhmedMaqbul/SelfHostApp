@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.DataProtection;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Extensions.DependencyInjection;
 using Microsoft.OpenApi;
 using SelfHostApp.Data;
@@ -35,7 +34,6 @@ using Volo.Abp.MultiTenancy;
 using Volo.Abp.PermissionManagement;
 using Volo.Abp.PermissionManagement.HttpApi;
 using Volo.Abp.PermissionManagement.Identity;
-using Volo.Abp.SettingManagement;
 using Volo.Abp.Swashbuckle;
 using Volo.Abp.UI.Navigation.Urls;
 using Volo.Abp.Validation.Localization;
@@ -56,8 +54,6 @@ using Volo.Abp.BlobStoring.Database.EntityFrameworkCore;
 using Volo.Abp.BackgroundJobs.EntityFrameworkCore;
 using Volo.Abp.EntityFrameworkCore.Sqlite;
 using Volo.Abp.Studio.Client.AspNetCore;
-
-using Microsoft.Extensions.Hosting;
 
 namespace SelfHostApp;
 
@@ -147,10 +143,6 @@ public class SelfHostAppModule : AbpModule
                 options.AddDevelopmentEncryptionAndSigningCertificate = false;
             });
 
-            //PreConfigure<OpenIddictServerBuilder>(serverBuilder =>
-            //{
-            //    serverBuilder.AddProductionEncryptionAndSigningCertificate("openiddict.pfx", configuration["AuthServer:CertificatePassPhrase"]!);
-            //});
 
             PreConfigure<OpenIddictServerBuilder>(serverBuilder =>
             {
