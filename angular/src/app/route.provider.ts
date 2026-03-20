@@ -17,5 +17,13 @@ function configureRoutes() {
       order: 1,
       layout: eLayoutType.application,
     },
+    {
+      path: '/todo',
+      name: '::Menu:Todo',
+      iconClass: 'fas fa-list-check',
+      order: 2,
+      layout: eLayoutType.application,
+      requiredPolicy: 'Todo.Items',
+    },
   ]);
 }
