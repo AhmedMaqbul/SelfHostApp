@@ -11,6 +11,7 @@
     "Permission:TodoItemsCreate": "Todo Items Create",
     "Permission:TodoItemsDelete": "Todo Items Delete",
     "TODOLIST": "TODO LIST",
+    "CREATEDTODOITEM": "Todo item created successfully!",
     "DELETEDTODOITEM": "Deleted the todo item."
   }
 }
