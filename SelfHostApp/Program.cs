@@ -88,16 +88,6 @@ public class Program
 
             await app.InitializeApplicationAsync();
 
-            //if (IsMigrateDatabase(args))
-            //{
-            //    await app.Services.GetRequiredService<SelfHostAppDbMigrationService>().MigrateAsync();
-            //    var previous = Console.ForegroundColor;
-            //    Console.ForegroundColor = ConsoleColor.Green;
-            //    Console.WriteLine("Migration completed.");
-            //    Console.ForegroundColor = previous;
-            //    return 0;
-            //}
-
             app.UseStaticFiles();
 
             app.UseRouting();
@@ -107,7 +97,7 @@ public class Program
             app.MapGet("/", () => Results.Redirect("/app"));
 
             app.MapFallbackToFile(
-                "/app/{*path}",
+                "/app/{*path:nonfile}",
                 "app/index.html"
             );
 
