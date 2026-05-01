@@ -1,6 +1,6 @@
 # Self-Hosted Single-Layer Application with Single-Port Hosting
 
-This document describes how to host a **Single-Layer ABP Framework version 10** application using **Angular** and **ASP.NET Core (.NET 10)** on a **single port**, deployed as a **Windows Service** using **Kestrel**.
+This document describes how to host a **Single-Layer ABP Framework version 10** application using **Angular(21)** and **ASP.NET Core (.NET 10)** on a **single port**, deployed as a **Windows Service** using **Kestrel**.
 
 The Angular application is served as a static SPA from the ASP.NET Core application, while **HTTP APIs** and authentication endpoints are exposed through route prefixes.
 
