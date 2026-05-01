@@ -742,7 +742,6 @@ Logs are written to: `C:\Services\SelfHostApp\Logs\`
 **Supports**:
 
 - Rolling file logs
-
 - Windows Event Log (when running as service)
 
 ---
