@@ -44,7 +44,7 @@ For small internal or on-premise applications:
 - IIS is not strictly required
 - Kestrel provides sufficient performance and stability
 - Deployment is simplified by avoiding IIS configuration and maintenance
-- The application can be distributed as a single executable
+- The application can be distributed as a self-contained deployment folder with an entry executable
 
 ### Running as a Windows Service
 
@@ -60,8 +60,10 @@ Running the application as a **Windows Service** provides the following advantag
 ## Required NuGet Packages
 
 ```bash
-dotnet add package Microsoft.EntityFrameworkCore.Sqlite
+dotnet add package Volo.Abp.EntityFrameworkCore.Sqlite
 dotnet add package Microsoft.Extensions.Hosting.WindowsServices
+dotnet add package Serilog.AspNetCore
+dotnet add package Serilog.Sinks.Async
 dotnet add package Serilog.Sinks.EventLog
 ```
 
@@ -79,8 +81,9 @@ dotnet add package Serilog.Sinks.EventLog
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+    <PackageReference Include="Volo.Abp.EntityFrameworkCore.Sqlite" />
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" />
+    <PackageReference Include="Serilog.AspNetCore" />
     <PackageReference Include="Serilog.Sinks.Async" />
     <PackageReference Include="Serilog.Sinks.EventLog" />
   </ItemGroup>
@@ -180,7 +183,7 @@ app.MapControllers();
 app.MapGet("/", () => Results.Redirect("/app"));
 
 app.MapFallbackToFile(
-    "/app/{*path}",
+    "/app/{*path:nonfile}",
     "app/index.html"
 );
 ```
@@ -237,15 +240,28 @@ While running as windows service if you want logs, then you can add in `program.
 
 ---
 
-## Application Configuration with Kestrel Configuration
+## Application Configuration
 
-The following example shows the relevant configuration used for `kestrel`,
-`single-port hosting`, `authentication` and `database` access along with Development Launch Configuration.
+The following examples show the relevant configuration for Kestrel HTTPS hosting,
+single-port frontend/backend hosting, authentication, database access, and local
+development launch settings.
 
 ### ✅ Section 1: `appsettings.json`
 
 ```json
 {
+  "Kestrel": {
+    "Endpoints": {
+      "Https": {
+        "Url": "https://localhost:44321",
+        "Certificate": {
+          "Path": "C:\\Services\\SelfHostApp\\SelfHostAppHttps.pfx",
+          "Password": "SelfHostApp@123"
+        }
+      }
+    }
+  },
+
   "App": {
     "SelfUrl": "https://localhost:44321",
     "ClientUrl": "https://localhost:44321/app",
@@ -294,7 +310,15 @@ The following example shows the relevant configuration used for `kestrel`,
 
 - `/app` is the SPA root
 
-- Certificate path must be accessible to the service account
+- The `Kestrel` section defines the HTTPS URL that the Windows Service listens on.
+
+- `SelfHostAppHttps.pfx` is the HTTPS certificate used by Kestrel.
+
+- `openiddict.pfx` is separate and is used by OpenIddict for token signing and encryption.
+
+- Because the `Kestrel` section is in `appsettings.json`, the HTTPS certificate file
+  must exist anywhere this application is started, including local development and
+  Windows Service hosting.
 
 ### ✅ Section 2: `launchSettings.json` (`Properties/launchSettings.json`)
 
@@ -458,8 +482,12 @@ add `baseHref`,`deployUrl` and define same `port` number as `api`.
       }
 ```
 
-The Angular application is configured to run under the `/app` path and to use the
-same HTTPS port as the backend API.
+The Angular application is configured to run under the `/app` path. In the
+published application, Angular is served by ASP.NET Core on the same HTTPS port
+as the backend API.
+
+If running `ng serve` separately during development, ensure it does not conflict
+with the backend process listening on the same port.
 
 - **`baseHref`**  
   Sets the base URL for the Angular router.  
@@ -472,9 +500,9 @@ same HTTPS port as the backend API.
   Angular application path when served from the ASP.NET Core `wwwroot` directory.
 
 - **`port`**  
-  Configures the Angular development server to use the same port as the backend API.  
-  Using a single port simplifies local development and mirrors the single-port
-  deployment model used in production.
+  Configures the Angular development server port. The checked-in value matches
+  the backend port to mirror the published single-port model, but only one
+  process can listen on the port at a time during separate development runs.
 
 - **`ssl`**  
   Enables HTTPS for the Angular development server.  
@@ -616,9 +644,39 @@ project (`.csproj`) file.
 dotnet publish -c Release -r win-x64 --self-contained true -o C:\Services\SelfHostApp
 ```
 
-This produces a self-contained deployable application (single entry executable).
+This produces a self-contained deployable application folder with `SelfHostApp.exe`
+as the entry executable.
 
 ---
+
+## HTTPS Certificate for Kestrel
+
+Create or provide a separate HTTPS certificate for Kestrel.
+
+For local or internal testing, an exported development certificate can be created
+from an elevated Command Prompt:
+
+```cmd
+dotnet dev-certs https -ep C:\Services\SelfHostApp\SelfHostAppHttps.pfx -p SelfHostApp@123
+```
+
+The generated certificate path and password must match the `Kestrel` section in
+`appsettings.json`:
+
+```json
+"Certificate": {
+  "Path": "C:\\Services\\SelfHostApp\\SelfHostAppHttps.pfx",
+  "Password": "SelfHostApp@123"
+}
+```
+
+The Windows Service account must have permission to read this `.pfx` file.
+
+For production environments, use a certificate issued by a trusted certificate
+authority instead of a development certificate.
+
+---
+
 ## Configure to Run as a Windows Service
 
 Run the following commands from an **elevated Command Prompt**
@@ -631,6 +689,10 @@ sc create SelfHostApp ^
 binPath= "C:\Services\SelfHostApp\SelfHostApp.exe" ^
 start= auto
 ```
+
+The listening URL and HTTPS certificate are read from the `Kestrel` section in
+`appsettings.json`. `launchSettings.json` is used only during local development
+and is not applied when the application runs as a Windows Service.
 
 ### Start the Service
 
